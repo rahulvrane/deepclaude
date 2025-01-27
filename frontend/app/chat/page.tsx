@@ -8,7 +8,8 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] = useState("claude-3-5-sonnet-20241022")
   const [apiTokens, setApiTokens] = useState({
     deepseekApiToken: "",
-    anthropicApiToken: ""
+    anthropicApiToken: "",
+    openrouterApiToken: ""
   })
 
   return (

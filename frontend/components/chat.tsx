@@ -40,6 +40,7 @@ interface ChatProps {
   apiTokens: {
     deepseekApiToken: string
     anthropicApiToken: string
+    openrouterApiToken: string
   }
 }
 
@@ -407,7 +408,7 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
 
   const handleSubmit = async () => {
     if (!input.trim() || isLoading) return
-    if (!apiTokens.deepseekApiToken || !apiTokens.anthropicApiToken) return
+    if (!apiTokens.deepseekApiToken || !apiTokens.anthropicApiToken || !apiTokens.openrouterApiToken) return
 
     // Track message sent
     posthog.capture('message_sent', {
@@ -465,6 +466,16 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
             temperature: 0,
             model: selectedModel
           }
+        },
+        openrouter_config: {
+          headers: {
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "DeepClaude"
+          },
+          body: {
+            temperature: 0,
+            model: selectedModel
+          }
         }
       }
 
@@ -475,7 +486,8 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
           "Content-Type": "application/json",
           "Accept": "application/json",
           "X-DeepSeek-API-Token": apiTokens.deepseekApiToken,
-          "X-Anthropic-API-Token": apiTokens.anthropicApiToken
+          "X-Anthropic-API-Token": apiTokens.anthropicApiToken,
+          "X-OpenRouter-API-Token": apiTokens.openrouterApiToken
         },
         body: JSON.stringify(requestBody)
       })
@@ -598,7 +610,7 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
     }
   }
 
-  const hasApiTokens = apiTokens.deepseekApiToken && apiTokens.anthropicApiToken
+  const hasApiTokens = apiTokens.deepseekApiToken && apiTokens.anthropicApiToken && apiTokens.openrouterApiToken
 
   return (
     <div className="flex min-h-screen">
