@@ -25,6 +25,16 @@ interface Message {
   role: "user" | "assistant"
   content: string
   thinking?: string
+  cost?: {
+    total_cost: number
+    prompt_cost: number
+    completion_cost: number
+    tokens: {
+      prompt_tokens: number
+      completion_tokens: number
+      total_tokens: number
+    }
+  }
 }
 
 interface StoredChat {
@@ -398,6 +408,18 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
             >
               {message.content}
             </ReactMarkdown>
+            {message.cost && (
+              <div className="mt-2 text-xs text-muted-foreground border-t border-border/40 pt-2">
+                <div className="flex justify-between">
+                  <span>Cost: ${message.cost.total_cost.toFixed(6)}</span>
+                  <span>Tokens: {message.cost.tokens.total_tokens}</span>
+                </div>
+                <div className="flex justify-between text-[10px]">
+                  <span>Prompt: ${message.cost.prompt_cost.toFixed(6)} ({message.cost.tokens.prompt_tokens} tokens)</span>
+                  <span>Completion: ${message.cost.completion_cost.toFixed(6)} ({message.cost.tokens.completion_tokens} tokens)</span>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )
@@ -418,6 +440,21 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
       has_code: input.includes('```'),
       timestamp: new Date().toISOString()
     })
+
+    // Track costs if available
+    if (currentMessageRef.current?.cost) {
+      posthog.capture('message_cost', {
+        chat_id: currentChatId,
+        model: currentModel,
+        total_cost: currentMessageRef.current.cost.total_cost,
+        prompt_cost: currentMessageRef.current.cost.prompt_cost,
+        completion_cost: currentMessageRef.current.cost.completion_cost,
+        total_tokens: currentMessageRef.current.cost.tokens.total_tokens,
+        prompt_tokens: currentMessageRef.current.cost.tokens.prompt_tokens,
+        completion_tokens: currentMessageRef.current.cost.tokens.completion_tokens,
+        timestamp: new Date().toISOString()
+      })
+    }
 
     // Create new chat if none exists
     if (!currentChatId) {
@@ -487,7 +524,8 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
           "Accept": "application/json",
           "X-DeepSeek-API-Token": apiTokens.deepseekApiToken,
           "X-Anthropic-API-Token": apiTokens.anthropicApiToken,
-          "X-OpenRouter-API-Token": apiTokens.openrouterApiToken
+          "X-OpenRouter-API-Token": apiTokens.openrouterApiToken,
+          "X-Track-Cost": "true"
         },
         body: JSON.stringify(requestBody)
       })
@@ -499,7 +537,8 @@ export function Chat({ selectedModel, onModelChange, apiTokens }: ChatProps) {
       currentMessageRef.current = {
         role: "assistant",
         content: "",
-        thinking: ""
+        thinking: "",
+        cost: undefined
       }
 
       let isThinking = false

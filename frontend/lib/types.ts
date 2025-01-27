@@ -3,6 +3,19 @@ export interface Message {
   content: string;
 }
 
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
+export interface CostInfo {
+  total_cost: number;
+  prompt_cost: number;
+  completion_cost: number;
+  tokens: TokenUsage;
+}
+
 export interface ChatCompletionResponse {
   id: string;
   choices: Array<{
@@ -12,11 +25,8 @@ export interface ChatCompletionResponse {
     };
     finish_reason: string;
   }>;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+  usage?: TokenUsage;
+  cost?: CostInfo;
 }
 
 export interface ApiClient {
